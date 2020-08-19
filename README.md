@@ -1,4 +1,4 @@
 # yaxmodem
 Yet Another XMODEM
 
-This is under development. I currently only receives and does so in a very naive way. I do not recommend using this.
+This is under development. It currently only receives, and it does so in a very naive way. I do not recommend using this.
