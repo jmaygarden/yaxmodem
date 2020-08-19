@@ -1,28 +1,31 @@
 #include "xmodem.h"
 
-#define BUF_LEN (133)
+#define HEADER_LEN (3)
+#define PAYLOAD_LEN (128)
+#define FOOTER_LEN (1)
+#define BLOCK_LEN (HEADER_LEN + PAYLOAD_LEN + FOOTER_LEN)
 
-static int const EOF = -1;
+#define SOH (0x01)
+#define EOT (0x04)
+#define ACK (0x05)
+#define NAK (0x15)
+#define CAN (0x18)
 
-static char const SOH = 0x01;
-static char const EOT = 0x04;
-static char const ACK = 0x06;
-static char const NAK = 0x15;
-
-struct Receiver
+static int checksum(char const *buf)
 {
-    struct XModemReceiver *p;
-    size_t len;
-    char buf[BUF_LEN];
-};
+    unsigned char sum = 0;
+
+    for (int i = 0; i < BLOCK_LEN - 1; ++i)
+    {
+        sum += buf[i];
+    }
+
+    return sum == buf[BLOCK_LEN - 1];
+}
 
 void xmodem_receive(struct XModemReceiver *p)
 {
-    struct Receiver self = {
-        .p = p,
-        .len = 0,
-        .buf = {0},
-    };
+    char buf[BLOCK_LEN];
 
     // start
     for (;;)
@@ -42,13 +45,38 @@ void xmodem_receive(struct XModemReceiver *p)
     // run
     for (;;)
     {
-        self.buf[self.len] = p->get(p->context);
+        buf[0] = p->get(p->context);
 
-        if (self.len == 0)
+        switch (buf[0])
         {
-            switch (self.buf[0])
+        case SOH:
+            break;
+
+        case EOT:
+            return;
+
+        default:
+            goto reject;
+        }
+
+        for (int i = 1; i < BLOCK_LEN; ++i)
+        {
+            buf[i] = p->get(p->context);
+        }
+
+        if (buf[0] == SOH && buf[1] == ~buf[2] && checksum(buf))
+        {
+            p->write(p->context, &buf[HEADER_LEN], PAYLOAD_LEN);
+            p->put(p->context, ACK);
+        }
+        else
+        {
+        reject:
+            while (p->ready(p->context) > 0)
             {
+                p->get(p->context);
             }
+            p->put(p->context, NAK);
         }
     }
 }
