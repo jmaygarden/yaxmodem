@@ -7,7 +7,7 @@
 
 #define SOH (0x01)
 #define EOT (0x04)
-#define ACK (0x05)
+#define ACK (0x06)
 #define NAK (0x15)
 #define CAN (0x18)
 
@@ -20,7 +20,7 @@ static int checksum(char const *buf)
         sum += buf[i];
     }
 
-    return sum == buf[BLOCK_LEN - 1];
+    return sum == (unsigned char)buf[BLOCK_LEN - 1];
 }
 
 void xmodem_receive(struct XModemReceiver *p)

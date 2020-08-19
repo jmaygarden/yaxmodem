@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 struct Context
@@ -10,21 +11,37 @@ struct Context
     int pty;
 };
 
-int test_get(void *context)
+int test_ready(void *p)
 {
-    return EOF;
+    int const fd = ((struct Context *)p)->pty;
+    int bytes = 0;
+    int const result = ioctl(fd, FIONREAD, &bytes);
+
+    return result == 0 && bytes > 0;
 }
 
-void test_put(void *context, char c)
+int test_get(void *p)
 {
+    int const fd = ((struct Context *)p)->pty;
+    unsigned char buf;
+    ssize_t len = read(fd, &buf, sizeof buf);
+
+    return len > 0 ? buf : -1;
 }
 
-int test_write(void *context, char *buf, int len)
+void test_put(void *p, char c)
 {
-    return 0;
+    int const fd = ((struct Context *)p)->pty;
+
+    write(fd, &c, sizeof c);
 }
 
-void test_sleep(void *context, int ms)
+int test_write(void *p, char *buf, int len)
+{
+    return write(fileno(stdout), buf, len);
+}
+
+void test_sleep(void *p, int ms)
 {
     usleep(1000 * ms);
 }
@@ -35,6 +52,7 @@ int main(int argc, char **argv)
         .pty = open("/dev/ptmx", O_RDWR | O_NOCTTY),
     };
     struct XModemReceiver receiver = {
+        .ready = test_ready,
         .get = test_get,
         .put = test_put,
         .write = test_write,

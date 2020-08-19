@@ -6,7 +6,7 @@ SRCS = \
 INCS = \
        -Iinclude
 
-CFLAGS = $(INCS) -Wall -Werror -MMD -MP -MF"$(@:%.o=%.d)"
+CFLAGS = $(INCS) -g -Wall -Werror -MMD -MP -MF"$(@:%.o=%.d)"
 
 OBJS = $(addprefix $(BUILD_DIR)/,$(notdir $(SRCS:.c=.o)))
 vpath %.c $(sort $(dir $(SRCS)))
