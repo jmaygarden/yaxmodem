@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "make",
+      "group": {
+        "isDefault": true,
+        "kind": "build"
+      },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "clean",
+      "type": "shell",
+      "command": "make clean",
+      "group": "build"
+    },
+    {
+      "label": "PTY Test",
+      "type": "shell",
+      "command": "build/ptytest",
+      "group": "test"
+    }
+  ]
+}
